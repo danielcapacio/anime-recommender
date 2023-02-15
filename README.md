@@ -1,6 +1,12 @@
 # Anime Recommender Application
 CPSC 312 Project 1: Functional Programming
 
+### To Run:
+In root directory, type
+```
+cabal run
+```
+
 ### Group Members
 - Daniel Capacio - danielcapacio@gmail.com
 - Bryan Seo - sbokyu9@gmail.com

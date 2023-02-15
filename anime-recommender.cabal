@@ -1,0 +1,16 @@
+cabal-version:      2.4
+name:               anime-recommender
+version:            0.1.0.0
+
+executable anime-recommender
+    main-is:          
+        main.hs
+    other-modules:
+        InitializeDatabase
+    build-depends:    
+        base ^>=4.16.4.0,
+        aeson,
+        http-conduit
+    hs-source-dirs: src
+    default-language: Haskell2010
+
