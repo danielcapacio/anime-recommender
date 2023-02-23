@@ -31,7 +31,6 @@ import           System.Directory (removeFile)
 
 {-
  - Defining the parsing behaviour
- - of the JSON that will be fetched
  -}
 data StudiosParsed = StudiosParsed 
     { nameStudio:: String
@@ -50,7 +49,7 @@ data DemographicsParsed = DemographicsParsed
     } deriving (Show)
 
 data Info = Info 
-    { title_english  :: String
+    { title :: String
     , studios :: [StudiosParsed]
     , genres   :: [GenresParsed]
     , themes        :: [ThemesParsed]
@@ -68,7 +67,7 @@ instance FromJSON Dataset where
 
 instance FromJSON Info where
     parseJSON (Object o) = 
-        Info <$> o .: "title_english"
+        Info <$> o .: "title"
         <*> o .: "studios"
         <*> o .: "genres"
         <*> o .: "themes"
@@ -134,7 +133,7 @@ Demographics
  -}
 loadData :: IO ()
 loadData = do
-    response <- httpLbs "https://api.jikan.moe/v4/top/anime?limit=10"
+    response <- httpLbs "https://api.jikan.moe/v4/top/anime"
     let body = getResponseBody response
     let decoded = eitherDecode body :: Either String Dataset
 
@@ -144,10 +143,10 @@ loadData = do
 
         case decoded of
             Left o -> 
-                error "error: API response did not return correctly"
+                error o
             Right o -> 
                 forM_ (dataObj o) $ \i -> do
-                    tempId <- insert $ Title (title_english i)
+                    tempId <- insert $ Title (title i)
                     forM_ (studios i) $ \s -> do
                         insert $ Studios (nameStudio s) tempId
                     forM_ (genres i) $ \g -> do
