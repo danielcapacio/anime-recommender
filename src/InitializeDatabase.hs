@@ -128,34 +128,46 @@ Demographics
     deriving Show
 |]
 
+fetchPage :: String -> IO(Either String Dataset)
+fetchPage page = do
+    let requestUrl = "https://api.jikan.moe/v4/top/anime" ++ "?page=" ++ page :: String
+    request <- parseRequest requestUrl
+    response <- httpLbs request
+    let body = getResponseBody response
+    let decoded = eitherDecode body :: Either String Dataset
+    return decoded
+
 {-
  - Fetches response from API, parses it, and places the results in the database
  -}
 loadData :: IO ()
 loadData = do
-    response <- httpLbs "https://api.jikan.moe/v4/top/anime"
-    let body = getResponseBody response
-    let decoded = eitherDecode body :: Either String Dataset
+    page1 <- fetchPage "1"
+    page2 <- fetchPage "2"
+    page3 <- fetchPage "3"
+    page4 <- fetchPage "4"
+    let pages = [page1, page2, page3, page4] :: [Either String Dataset]
 
     removeFile "database.sqlite3"
     runSqlite "database.sqlite3" $ do
         runMigration migrateAll
 
-        case decoded of
-            Left o -> 
-                error o
-            Right o -> 
-                forM_ (dataObj o) $ \i -> do
-                    tempId <- insert $ Title (title i)
-                    forM_ (studios i) $ \s -> do
-                        insert $ Studios (nameStudio s) tempId
-                    forM_ (genres i) $ \g -> do
-                        insert $ Genres (nameGenre g) tempId
-                    forM_ (themes i) $ \t -> do
-                        insert $ Themes (nameTheme t) tempId
-                    forM_ (demographics i) $ \d -> do
-                        insert $ Demographics (nameDemographic d) tempId
-        
+        forM_ (pages) $ \page -> do
+            case (page) of
+               Left o -> 
+                   error o
+               Right o -> 
+                   forM_ (dataObj o) $ \i -> do
+                       tempId <- insert $ Title (title i)
+                       forM_ (studios i) $ \s -> do
+                           insert $ Studios (nameStudio s) tempId
+                       forM_ (genres i) $ \g -> do
+                           insert $ Genres (nameGenre g) tempId
+                       forM_ (themes i) $ \t -> do
+                           insert $ Themes (nameTheme t) tempId
+                       forM_ (demographics i) $ \d -> do
+                           insert $ Demographics (nameDemographic d) tempId
+      
 {- 
  - Input: A string containing the title of a show
  - Returns: All the titles of shows in the database that share the same genre as the input 
