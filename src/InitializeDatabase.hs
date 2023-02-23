@@ -20,13 +20,14 @@ module InitializeDatabase where
 import           Network.HTTP.Simple
 import           Data.Aeson
 import           Control.Applicative
-import qualified Data.Text as T
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
 import           Control.Monad.IO.Class  (liftIO)
-import           Control.Monad (mzero, forM_)
+import           Control.Monad (mzero, forM_, forM, foldM, filterM)
 import           GHC.Generics
+import           Data.List (nub)
+import           System.Directory (removeFile)
 
 {-
  - Defining the parsing behaviour
@@ -131,13 +132,14 @@ Demographics
 {-
  - Fetches response from API, parses it, and places the results in the database
  -}
-run :: IO ()
-run = do
+loadData :: IO ()
+loadData = do
     response <- httpLbs "https://api.jikan.moe/v4/top/anime?limit=10"
     let body = getResponseBody response
     let decoded = eitherDecode body :: Either String Dataset
 
-    runSqlite ":memory:" $ do
+    removeFile "database.sqlite3"
+    runSqlite "database.sqlite3" $ do
         runMigration migrateAll
 
         case decoded of
@@ -146,30 +148,40 @@ run = do
             Right o -> 
                 forM_ (dataObj o) $ \i -> do
                     tempId <- insert $ Title (title_english i)
-                    -- liftIO $ print (title_english i)
                     forM_ (studios i) $ \s -> do
                         insert $ Studios (nameStudio s) tempId
-                        -- liftIO $ print (nameStudio s)
                     forM_ (genres i) $ \g -> do
                         insert $ Genres (nameGenre g) tempId
-                        -- liftIO $ print (nameGenre g)
                     forM_ (themes i) $ \t -> do
                         insert $ Themes (nameTheme t) tempId
-                        -- liftIO $ print (nameTheme t)
                     forM_ (demographics i) $ \d -> do
                         insert $ Demographics (nameDemographic d) tempId
-                        -- liftIO $ print (nameDemographic d)
         
+{- 
+ - Input: A string containing the title of a show
+ - Returns: All the titles of shows in the database that share the same genre as the input 
+ - If the title appears multiple times, it means the show shares multiple genres with the input
+ -}
+getGenre :: String -> IO [String]
+getGenre inputTitle = do
+    runSqlite "database.sqlite3" $ do
         -- get all shows with the same genre as the FMA
-        title1 <- selectKeysList [TitleName ==. "Fullmetal Alchemist: Brotherhood"] [LimitTo 1]
-        genre <- selectList [GenresTitle ==. (head title1)] []
-        forM_ genre $ \g -> do
-            let var = entityVal g
-            title <- selectList [GenresName ==. genresName var] []
-            forM_ title $ \t -> do
-                let show = entityVal t
-                titles <- selectList [TitleId ==. genresTitle show] []
-                forM_ titles $ \name -> do
-                    let a = entityVal name
-                    liftIO $ print (titleName a)
-
+        title1 <- selectKeysList [TitleName ==. inputTitle] [LimitTo 1]
+        genreList <- selectList [GenresTitle ==. (head title1)] [] -- list of genres of given show
+        let sameGenreAccumulator = [] :: [String]
+        
+        -- loop through all the genres in given show
+        result <- foldM (\acc genre -> do
+            let genreEntity = entityVal genre
+            showList <- selectList [GenresName ==. genresName genreEntity] [] -- list of shows with same genre as genreName
+            let middleList = [] :: [String]
+            -- loop through all the shows in the [genreName] genre, add their names to the middleResult list
+            middleResult <- foldM (\ac show -> do
+                let showEntity = entityVal show
+                title <- selectList [TitleId ==. genresTitle showEntity] [LimitTo 1]
+                let titleEntity = entityVal (head title)
+                return (ac ++ [titleName titleEntity])) middleList showList
+            -- add the middleResult to the total accumulator list
+            return (acc ++ middleResult)) sameGenreAccumulator genreList
+        result <- filterM (\x -> return $ x /= inputTitle) result
+        return result
