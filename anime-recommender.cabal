@@ -7,6 +7,7 @@ executable anime-recommender
         main.hs
     other-modules:
         InitializeDatabase
+        CLI
     build-depends:    
         base ^>=4.16.4.0,
         aeson,
@@ -16,6 +17,8 @@ executable anime-recommender
         persistent-template,
         async,
         directory,
+        containers,
+        array
     hs-source-dirs: src
     default-language: Haskell2010
 
