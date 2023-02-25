@@ -97,7 +97,7 @@ setup window = do
     aImg <- UI.a # set UI.href "#" 
                 # set (UI.attr "value") "putAnimeTitleHere"
                 #+ [UI.img # set UI.src "https://cdn.myanimelist.net/images/anime/7/3791.jpg"
-                    # set (UI.attr "width") "25%"]
+                    # set (UI.attr "width") "15%"]
     UI.on UI.click aImg $ \_ -> do
         -- get the value attribute of the clicked anchor tag
         animeTitle <- UI.get UI.value aImg
@@ -128,16 +128,35 @@ setup window = do
         element recommendedTitleDiv # set UI.style [("display", "")]
         element recommendedTitle # set UI.text "<PUT GENERATED TITLE(S) HERE>"
         
+    -- setup elements to display recommended anime tile
     getRecommendationDiv <- UI.div # set UI.style [("padding", "10px")]
     element getRecommendationDiv #+ [element getRecommendationButton]
     element getRecommendationDiv #+ [element topFiveGenresOutput]
     getBody window #+ [element getRecommendationDiv]
     getBody window #+ [element recommendedTitleDiv]
     
-    -- event handlers for each genre button
-    UI.on UI.click genreButton1 $ \_ -> do
+    -- create event handlers for each genre button calling function `setupGenreButton`
+    setupGenreButton genreButton1 "Action" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton2 "Adventure" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton3 "Award Winning" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton4 "Comedy" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton5 "Drama" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton6 "Ecchi" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton7 "Fantasy" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton8 "Mystery" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton9 "Romance" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton10 "Sci-Fi" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton11 "Slice of Life" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton12 "Sports" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton13 "Supernatural" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    setupGenreButton genreButton14 "Suspense" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+
+-- function to set up a click event handler for a genre button
+setupGenreButton :: UI.Element -> String -> IORef [String] -> UI.Element -> UI.Element -> UI.Element -> UI ()
+setupGenreButton genreButton genreName topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv = do
+    UI.on UI.click genreButton $ \_ -> do
         -- disabled clicked button to prevent duplicate genres from being picked
-        element genreButton1 # set (UI.attr "disabled") ""
+        element genreButton # set (UI.attr "disabled") ""
         -- display label title
         element labelTitle # set UI.style [("display", "")]
         -- TODO: validation for 5 genres to be selected
@@ -149,140 +168,10 @@ setup window = do
         -- disable all genre buttons, else let user keep selecting their top 5 genres
         -- if length genresClickedArrIO >= 4 then (element genreButton1 # set (UI.attr "disabled") "") else (element genreButton1 # set (UI.attr "class") "")
         
-        -- add the name of the button to the array
-        let genresClickedArr = genresClickedArrIO ++ ["Action"]
+        -- add the name of the genre to the array
+        let genresClickedArr = genresClickedArrIO ++ [genreName]
         -- update array
         liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
         -- update display div
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton2 $ \_ -> do
-        element genreButton2 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Adventure"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton3 $ \_ -> do
-        element genreButton3 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Award Winning"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton4 $ \_ -> do
-        element genreButton4 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Comedy"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton5 $ \_ -> do
-        element genreButton5 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "Drama")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Drama"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton6 $ \_ -> do
-        element genreButton6 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Ecchi"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton7 $ \_ -> do
-        element genreButton7 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Fantasy"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton8 $ \_ -> do
-        element genreButton8 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Mystery"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton9 $ \_ -> do
-        element genreButton9 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Romance"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton10 $ \_ -> do
-        element genreButton10 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Sci-Fi"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton11 $ \_ -> do
-        element genreButton11 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Slice of Life"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton12 $ \_ -> do
-        element genreButton12 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Sports"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton13 $ \_ -> do
-        element genreButton13 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Supernatural"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
-        let genreDivText = joinWithComma genresClickedArr
-        element genreDiv # set text genreDivText
-
-    UI.on UI.click genreButton14 $ \_ -> do
-        element genreButton14 # set (UI.attr "disabled") ""
-        element labelTitle # set UI.style [("display", "")]
-        element getRecommendationButton # set UI.style [("display", "")]
-        genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
-        let genresClickedArr = genresClickedArrIO ++ ["Suspense"]
-        liftIO $ writeIORef topFiveGenreNamesRef genresClickedArr
         let genreDivText = joinWithComma genresClickedArr
         element genreDiv # set text genreDivText
