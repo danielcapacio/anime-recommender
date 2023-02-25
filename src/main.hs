@@ -108,20 +108,31 @@ setup window = do
     -- anchor tag to the body element
     getBody window #+ [element aImg]
 
+    recommendedTitleDiv <- UI.div # set UI.style [
+            ("margin-bottom", "25px"), ("margin-left", "20%"), ("margin-right", "20%"),
+            ("border", "2px solid black"),
+            ("display", "none")]
+    recommendedTitleHeader <- UI.h3 # set text "Your recommended title(s):"
+    recommendedTitle <- UI.h2 # set text ""
+    
     -- button for sending user's preferences
     getRecommendationButton <- UI.button # set UI.text "Get Recommendation" # set UI.style [("display", "none")]
-    -- getBody window #+ [element getRecommendationButton]
+    element recommendedTitleDiv #+ [element recommendedTitleHeader, element recommendedTitle]
     -- event handler for getting user's recommendation
     UI.on UI.click getRecommendationButton $ \_ -> do
         -- get the current genres array
         genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
         element topFiveGenresOutput # set UI.text (show genresClickedArrIO)
         liftIO $ print genresClickedArrIO -- *** print top 5 genres to console ***
-    
+        -- TODO: call our filter algorithm based on `topFiveGenreNamesRef` and `favouriteAnimeTitleRef`
+        element recommendedTitleDiv # set UI.style [("display", "")]
+        element recommendedTitle # set UI.text "<PUT GENERATED TITLE(S) HERE>"
+        
     getRecommendationDiv <- UI.div # set UI.style [("padding", "10px")]
     element getRecommendationDiv #+ [element getRecommendationButton]
     element getRecommendationDiv #+ [element topFiveGenresOutput]
     getBody window #+ [element getRecommendationDiv]
+    getBody window #+ [element recommendedTitleDiv]
     
     -- event handlers for each genre button
     UI.on UI.click genreButton1 $ \_ -> do
@@ -134,7 +145,7 @@ setup window = do
         -- get the current genres array
         genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
         
-        -- TODO: do not know the best way to disable all buttons after 5 genres selected
+        -- TODO: need to best way to disable all buttons after 5 genres selected
         -- disable all genre buttons, else let user keep selecting their top 5 genres
         -- if length genresClickedArrIO >= 4 then (element genreButton1 # set (UI.attr "disabled") "") else (element genreButton1 # set (UI.attr "class") "")
         
