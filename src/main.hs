@@ -50,7 +50,6 @@ setup window = do
     favouriteAnimeTitleRef <- liftIO $ newIORef ""
     
     return window # set UI.title "Anime Recommender"
-
     -- style <body></body>
     getBody window # set UI.style [("text-align", "center"), ("margin-left", "100px"), ("margin-right", "100px")]
     applicationHeading <- UI.h1 # set text "Anime Recommmender Application"
@@ -82,12 +81,14 @@ setup window = do
     genreButton13 <- UI.button # set UI.text "Supernatural" # set UI.style [("margin", "5px")]
     genreButton14 <- UI.button # set UI.text "Suspense" # set UI.style [("margin", "5px")]
     
-    -- add buttons to app body
-    getBody window #+ [element genreButton1, element genreButton2, element genreButton3, 
+    -- add buttons to a separate div
+    genreButtonsDiv <- UI.div # set UI.style [("margin-left", "15%"), ("margin-right", "15%")]
+    element genreButtonsDiv #+ [element genreButton1, element genreButton2, element genreButton3, 
         element genreButton4, element genreButton5, element genreButton6, element genreButton7,
         element genreButton8, element genreButton9, element genreButton10, element genreButton11,
         element genreButton12, element genreButton13, element genreButton14]
     
+    getBody window #+ [element genreButtonsDiv]
     getBody window #+ [element labelTitle, element genreDiv]
 
     favouriteAnimeQuestion <- UI.h3 # set text "Please select your favourite anime:"
@@ -103,8 +104,7 @@ setup window = do
         -- update array
         liftIO $ writeIORef favouriteAnimeTitleRef animeTitle
         favouriteAnimePicked <- liftIO $ readIORef favouriteAnimeTitleRef
-        -- liftIO $ print favouriteAnimePicked -- print picked genres to console
-        liftIO $ print favouriteAnimePicked
+        liftIO $ print favouriteAnimePicked -- *** print fav anime to console ***
     -- anchor tag to the body element
     getBody window #+ [element aImg]
 
@@ -116,7 +116,7 @@ setup window = do
         -- get the current genres array
         genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
         element topFiveGenresOutput # set UI.text (show genresClickedArrIO)
-        liftIO $ print genresClickedArrIO -- print picked genres to console
+        liftIO $ print genresClickedArrIO -- *** print top 5 genres to console ***
     
     getRecommendationDiv <- UI.div # set UI.style [("padding", "10px")]
     element getRecommendationDiv #+ [element getRecommendationButton]
