@@ -46,8 +46,11 @@ setup :: Window -> UI ()
 setup window = do
     -- create an array ref to hold the user's TOP 5 anime genres
     topFiveGenreNamesRef <- liftIO $ newIORef []
+    -- create an empty string to hold user's single, selected anime TITLE
+    favouriteAnimeTitleRef <- liftIO $ newIORef ""
     
     return window # set UI.title "Anime Recommender"
+
     -- style <body></body>
     getBody window # set UI.style [("text-align", "center"), ("margin-left", "100px"), ("margin-right", "100px")]
     applicationHeading <- UI.h1 # set text "Anime Recommmender Application"
@@ -87,15 +90,38 @@ setup window = do
     
     getBody window #+ [element labelTitle, element genreDiv]
 
-    -- add a button for sending user's preferences
+    favouriteAnimeQuestion <- UI.h3 # set text "Please select your favourite anime:"
+    getBody window #+ [element favouriteAnimeQuestion]
+    -- create the anchor tag with the image and event handler
+    aImg <- UI.a # set UI.href "#" 
+                # set (UI.attr "value") "putAnimeTitleHere"
+                #+ [UI.img # set UI.src "https://cdn.myanimelist.net/images/anime/7/3791.jpg"
+                    # set (UI.attr "width") "25%"]
+    UI.on UI.click aImg $ \_ -> do
+        -- get the value attribute of the clicked anchor tag
+        animeTitle <- UI.get UI.value aImg
+        -- update array
+        liftIO $ writeIORef favouriteAnimeTitleRef animeTitle
+        favouriteAnimePicked <- liftIO $ readIORef favouriteAnimeTitleRef
+        -- liftIO $ print favouriteAnimePicked -- print picked genres to console
+        liftIO $ print favouriteAnimePicked
+    -- anchor tag to the body element
+    getBody window #+ [element aImg]
+
+    -- button for sending user's preferences
     getRecommendationButton <- UI.button # set UI.text "Get Recommendation" # set UI.style [("display", "none")]
-    getBody window #+ [element getRecommendationButton]
+    -- getBody window #+ [element getRecommendationButton]
+    -- event handler for getting user's recommendation
     UI.on UI.click getRecommendationButton $ \_ -> do
         -- get the current genres array
         genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
         element topFiveGenresOutput # set UI.text (show genresClickedArrIO)
         liftIO $ print genresClickedArrIO -- print picked genres to console
-    getBody window #+ [element topFiveGenresOutput]
+    
+    getRecommendationDiv <- UI.div # set UI.style [("padding", "10px")]
+    element getRecommendationDiv #+ [element getRecommendationButton]
+    element getRecommendationDiv #+ [element topFiveGenresOutput]
+    getBody window #+ [element getRecommendationDiv]
     
     -- event handlers for each genre button
     UI.on UI.click genreButton1 $ \_ -> do
