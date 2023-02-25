@@ -90,31 +90,34 @@ setup window = do
     getBody window #+ [element genreButtonsDiv]
     getBody window #+ [element labelTitle, element genreDiv]
 
-    favouriteAnimeQuestion <- UI.h3 # set text "Please select your favourite anime:"
-    getBody window #+ [element favouriteAnimeQuestion]
+    favouriteAnimeQuestion <- UI.h3 # set text "Now please select your favourite anime:"
     favouriteAnimeLabelTitle <- UI.div # set text "Your favourite (preferred) anime:" # set UI.style [("margin", "10px"), ("display", "none")]
     favouriteAnimeTitleCurrent <- UI.div # set text "" # set UI.style [("margin", "10px")]
     favouriteAnimeTitleOutput <- UI.div # set text "" # set UI.style [("margin", "10px")]
-    animePostersDiv <- UI.div
+    animePostersDiv <- UI.div # set UI.style [("display", "none")]
+    
+    -- button for sending user's preferences
+    recommendationButton <- UI.button # set UI.text "Get Recommendation" # set UI.style [("display", "none")]
     -- TODO: need to be able to handle an arbitrary amount
-    -- create event handlers for each top anime calling function `createPosterAnchorTag`
-    animePoster1 <- createPosterAnchorTag "Violet Evergarden Movie" "https://cdn.myanimelist.net/images/anime/1032/100778.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster2 <- createPosterAnchorTag "Cowboy Bepop" "https://cdn.myanimelist.net/images/anime/7/3791.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster3 <- createPosterAnchorTag "Fullmetal Alchemist: Brotherhood" "https://cdn.myanimelist.net/images/anime/2/17090.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster4 <- createPosterAnchorTag "Fruits Basket: The Final" "https://cdn.myanimelist.net/images/anime/1085/114792.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster5 <- createPosterAnchorTag "Code Geass: Hangyaku no Lelouch R2" "https://cdn.myanimelist.net/images/anime/1736/109854.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster6 <- createPosterAnchorTag "Hunter x Hunter (2011)" "https://cdn.myanimelist.net/images/anime/1639/92662.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster7 <- createPosterAnchorTag "Steins;Gate" "https://cdn.myanimelist.net/images/anime/10/32023.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster8 <- createPosterAnchorTag "Bleach: Sennen Kessen-hen" "https://cdn.myanimelist.net/images/anime/1731/124971.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster9 <- createPosterAnchorTag "Bocchi the Rock!" "https://cdn.myanimelist.net/images/anime/1705/120728.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster10 <- createPosterAnchorTag "Owarimonogatari 2nd Season" "https://cdn.myanimelist.net/images/anime/2/89401.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster11 <- createPosterAnchorTag "Koe no Katachi" "https://cdn.myanimelist.net/images/anime/3/80136.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster12 <- createPosterAnchorTag "Gintama" "https://cdn.myanimelist.net/images/anime/13/83412.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster13 <- createPosterAnchorTag "Monster" "https://cdn.myanimelist.net/images/anime/10/13733.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster14 <- createPosterAnchorTag "Ginga Eiyuu Densetsu" "https://cdn.myanimelist.net/images/anime/2/74210.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
-    animePoster15 <- createPosterAnchorTag "3-gatsu no Lion 2nd Season" "https://cdn.myanimelist.net/images/anime/1429/100628.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent
+    -- create event handlers for each top anime calling function `initPosterAnchorHandlers`
+    animePoster1 <- initPosterAnchorHandlers "Violet Evergarden Movie" "https://cdn.myanimelist.net/images/anime/1032/100778.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster2 <- initPosterAnchorHandlers "Cowboy Bepop" "https://cdn.myanimelist.net/images/anime/7/3791.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster3 <- initPosterAnchorHandlers "Fullmetal Alchemist: Brotherhood" "https://cdn.myanimelist.net/images/anime/2/17090.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster4 <- initPosterAnchorHandlers "Fruits Basket: The Final" "https://cdn.myanimelist.net/images/anime/1085/114792.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster5 <- initPosterAnchorHandlers "Code Geass: Hangyaku no Lelouch R2" "https://cdn.myanimelist.net/images/anime/1736/109854.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster6 <- initPosterAnchorHandlers "Hunter x Hunter (2011)" "https://cdn.myanimelist.net/images/anime/1639/92662.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster7 <- initPosterAnchorHandlers "Steins;Gate" "https://cdn.myanimelist.net/images/anime/10/32023.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster8 <- initPosterAnchorHandlers "Bleach: Sennen Kessen-hen" "https://cdn.myanimelist.net/images/anime/1731/124971.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster9 <- initPosterAnchorHandlers "Bocchi the Rock!" "https://cdn.myanimelist.net/images/anime/1705/120728.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster10 <- initPosterAnchorHandlers "Owarimonogatari 2nd Season" "https://cdn.myanimelist.net/images/anime/2/89401.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster11 <- initPosterAnchorHandlers "Koe no Katachi" "https://cdn.myanimelist.net/images/anime/3/80136.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster12 <- initPosterAnchorHandlers "Gintama" "https://cdn.myanimelist.net/images/anime/13/83412.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster13 <- initPosterAnchorHandlers "Monster" "https://cdn.myanimelist.net/images/anime/10/13733.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster14 <- initPosterAnchorHandlers "Ginga Eiyuu Densetsu" "https://cdn.myanimelist.net/images/anime/2/74210.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+    animePoster15 <- initPosterAnchorHandlers "3-gatsu no Lion 2nd Season" "https://cdn.myanimelist.net/images/anime/1429/100628.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
     -- add anime posters to div and to body
     element animePostersDiv #+ [
+            element favouriteAnimeQuestion,
             element animePoster1, element animePoster2, element animePoster3,
             element animePoster4, element animePoster5, element animePoster6,
             element animePoster7, element animePoster8, element animePoster9,
@@ -130,11 +133,9 @@ setup window = do
     recommendedTitleHeader <- UI.h3 # set text "Your recommended title(s):"
     recommendedTitle <- UI.h2 # set text ""
     
-    -- button for sending user's preferences
-    getRecommendationButton <- UI.button # set UI.text "Get Recommendation" # set UI.style [("display", "none")]
     element recommendedTitleDiv #+ [element recommendedTitleHeader, element recommendedTitle]
     -- event handler for getting user's recommendation
-    UI.on UI.click getRecommendationButton $ \_ -> do
+    UI.on UI.click recommendationButton $ \_ -> do
         -- get the current genres array
         genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
         favouriteAnimePickedIO <- liftIO $ readIORef favouriteAnimeTitleRef
@@ -148,46 +149,45 @@ setup window = do
         
     -- setup elements to display recommended anime tile
     getRecommendationDiv <- UI.div # set UI.style [("padding", "10px")]
-    element getRecommendationDiv #+ [element getRecommendationButton]
+    element getRecommendationDiv #+ [element recommendationButton]
     element getRecommendationDiv #+ [element topFiveGenresOutput]
     element getRecommendationDiv #+ [element favouriteAnimeTitleOutput]
     getBody window #+ [element getRecommendationDiv]
     getBody window #+ [element recommendedTitleDiv]
     
-    -- create event handlers for each genre button calling function `createGenreButton`
-    createGenreButton genreButton1 "Action" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton2 "Adventure" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton3 "Award Winning" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton4 "Comedy" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton5 "Drama" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton6 "Ecchi" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton7 "Fantasy" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton8 "Mystery" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton9 "Romance" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton10 "Sci-Fi" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton11 "Slice of Life" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton12 "Sports" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton13 "Supernatural" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
-    createGenreButton genreButton14 "Suspense" topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv
+    -- create event handlers for each genre button calling function `initGenreButtonHandlers`
+    initGenreButtonHandlers genreButton1 "Action" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton2 "Adventure" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton3 "Award Winning" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton4 "Comedy" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton5 "Drama" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton6 "Ecchi" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton7 "Fantasy" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton8 "Mystery" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton9 "Romance" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton10 "Sci-Fi" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton11 "Slice of Life" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton12 "Sports" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton13 "Supernatural" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
+    initGenreButtonHandlers genreButton14 "Suspense" topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
 
 {-
  - function to set up a click event handler for a genre button 
  -}
-createGenreButton :: UI.Element -> String -> IORef [String] -> UI.Element -> UI.Element -> UI.Element -> UI ()
-createGenreButton genreButton genreName topFiveGenreNamesRef labelTitle getRecommendationButton genreDiv = do
+initGenreButtonHandlers :: UI.Element -> String -> IORef [String] -> UI.Element -> UI.Element -> UI.Element -> UI.Element -> UI ()
+initGenreButtonHandlers genreButton genreName topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv = do
     UI.on UI.click genreButton $ \_ -> do
         -- disabled clicked button to prevent duplicate genres from being picked
         element genreButton # set (UI.attr "disabled") ""
         -- display label title
         element labelTitle # set UI.style [("display", "")]
-        -- TODO: validation for 5 genres to be selected
-        element getRecommendationButton # set UI.style [("display", "")]
         -- get the current genres array
         genresClickedArrIO <- liftIO $ readIORef topFiveGenreNamesRef
         
-        -- TODO: need to best way to disable all buttons after 5 genres selected
-        -- disable all genre buttons, else let user keep selecting their top 5 genres
-        -- if length genresClickedArrIO >= 4 then (element genreButton1 # set (UI.attr "disabled") "") else (element genreButton1 # set (UI.attr "class") "")
+        -- VALIDATION on getting user to pick 5 genres before picking an anime title
+        if length genresClickedArrIO >= 4 then element animePostersDiv # set UI.style [("display", "")] else element genreButtonsDiv # set UI.style [("display", "none")]
+        -- **HIDE** all genre buttons, else let user keep selecting their top 5 genres
+        if length genresClickedArrIO >= 4 then element genreButtonsDiv # set UI.style [("display", "none")] else element genreButtonsDiv # set UI.style [("display", "")]
         
         -- add the name of the genre to the array
         let genresClickedArr = genresClickedArrIO ++ [genreName]
@@ -200,14 +200,15 @@ createGenreButton genreButton genreName topFiveGenreNamesRef labelTitle getRecom
 {-
  - function to set up a click event handler for an anime poster
  -}
-createPosterAnchorTag :: String -> String -> IORef String -> UI.Element -> UI.Element -> UI UI.Element
-createPosterAnchorTag title image favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent = do
+initPosterAnchorHandlers :: String -> String -> IORef String -> UI.Element -> UI.Element -> UI.Element -> UI UI.Element
+initPosterAnchorHandlers title image favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton = do
     posterLink <- UI.a
         # set (UI.attr "value") title
         # set UI.style [("margin", "10px")]
         #+ [UI.img # set UI.src image
             # set (UI.attr "width") "15%"]
     UI.on UI.click posterLink $ \_ -> do
+        element recommendationButton # set UI.style [("display", "")]
         element favouriteAnimeLabelTitle # set UI.style [("display", "")]
         element favouriteAnimeTitleCurrent # set UI.text title
         -- update fav anime title string
