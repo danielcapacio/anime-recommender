@@ -51,7 +51,11 @@ setup window = do
     
     return window # set UI.title "Anime Recommender"
     -- style <body></body>
-    getBody window # set UI.style [("text-align", "center"), ("margin-left", "100px"), ("margin-right", "100px")]
+    getBody window # set UI.style [
+        ("text-align", "center"),
+        ("margin-left", "100px"),
+        ("margin-right", "100px"),
+        ("font-family","Helvetica Neue")]
     applicationHeading <- UI.h1 # set text "Anime Recommmender Application"
     
     -- div to display the concatenated button names
