@@ -18,7 +18,8 @@ executable anime-recommender
         async,
         directory,
         containers,
-        array
+        array,
+        threepenny-gui
     hs-source-dirs: src
     default-language: Haskell2010
 
