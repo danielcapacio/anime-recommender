@@ -220,3 +220,12 @@ getTitles = do
             return (acc ++ [(titleName title, titleUrl title)])) [] titleList
         return result
         
+getGenres :: IO [String]
+getGenres = do
+    runSqlite "database.sqlite3" $ do
+        genresList <- selectList [] []
+        result <- foldM (\acc genresEntity -> do
+            let genre = entityVal genresEntity
+            return (acc ++ [genresName genre])) [] genresList
+        return $ nub result
+
