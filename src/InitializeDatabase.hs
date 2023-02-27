@@ -50,6 +50,7 @@ data DemographicsParsed = DemographicsParsed
 
 data Info = Info 
     { title :: String
+    , image_url :: String
     , studios :: [StudiosParsed]
     , genres   :: [GenresParsed]
     , themes        :: [ThemesParsed]
@@ -68,6 +69,7 @@ instance FromJSON Dataset where
 instance FromJSON Info where
     parseJSON (Object o) = 
         Info <$> o .: "title"
+        <*> (o .: "images" >>= (.: "jpg") >>= (.: "image_url"))
         <*> o .: "studios"
         <*> o .: "genres"
         <*> o .: "themes"
@@ -109,6 +111,7 @@ instance FromJSON DemographicsParsed where
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Title
     name String
+    url String
     deriving Show
 Studios
     name String
@@ -158,7 +161,7 @@ loadData = do
                    error o
                Right o -> 
                    forM_ (dataObj o) $ \i -> do
-                       tempId <- insert $ Title (title i)
+                       tempId <- insert $ Title (title i) (image_url i)
                        forM_ (studios i) $ \s -> do
                            insert $ Studios (nameStudio s) tempId
                        forM_ (genres i) $ \g -> do
@@ -196,3 +199,24 @@ getGenre inputTitle = do
             return (acc ++ middleResult)) sameGenreAccumulator genreList
         result <- filterM (\x -> return $ x /= inputTitle) result
         return result
+
+getGenreShows :: String -> IO [String]
+getGenreShows genre = do
+    runSqlite "database.sqlite3" $ do
+        genreList <- selectList [GenresName ==. genre] []
+        result <- foldM (\acc genreEntity -> do
+            let genre = entityVal genreEntity
+            title <- selectList [TitleId ==. genresTitle genre] [LimitTo 1]
+            let titleEntity = entityVal (head title)
+            return (acc ++ [titleName titleEntity])) [] genreList
+        return result
+
+getTitles :: IO [(String, String)]
+getTitles = do
+    runSqlite "database.sqlite3" $ do
+        titleList <- selectList [] []
+        result <- foldM (\acc titleEntity -> do
+            let title = entityVal titleEntity
+            return (acc ++ [(titleName title, titleUrl title)])) [] titleList
+        return result
+        

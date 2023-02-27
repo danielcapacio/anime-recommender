@@ -6,9 +6,10 @@ import           Control.Monad.IO.Class (liftIO)
 import           Data.Map as Map
 import           Data.Array as Arr
 import           Data.List as L
-import           Control.Monad (forM_, join)
+import           Control.Monad (forM_, join, foldM)
 import           Data.Array.IO
 import           Data.IORef
+import           Data.Ord (comparing)
 import           Graphics.UI.Threepenny       as UI
 import           Graphics.UI.Threepenny.Core
     ( defaultConfig,
@@ -28,19 +29,33 @@ import           Graphics.UI.Threepenny.Core
       Window )
 
 main = do
+    --result <- getRecommendation ["Adventure", "Action"] "Fullmetal Alchemist: Brotherhood"
+    --liftIO $ print result
+
+    --a <- async $ loadData -- we don't need to run this every time if we already have the database
+    --wait a
+
     -- start a server on port 8023 using the `startGUI` function
     startGUI defaultConfig
         { jsPort       = Just 8023
         , jsStatic     = Just "../wwwroot"
         } setup
-    -- a <- async $ loadData -- we don't need to run this every time if we already have the database
-    -- wait a
+
     
     -- result <- getGenre "Fullmetal Alchemist: Brotherhood"
     -- liftIO $ print result
 
 joinWithComma :: [String] -> String
 joinWithComma = L.foldr (\ s acc -> s ++ ", " ++ acc) ""
+
+getRecommendation :: [String] -> String -> IO [String]  
+getRecommendation genresList favouriteShow = do
+    allGenresShow <- foldM (\acc x -> do
+        showList <- getGenreShows x 
+        return (showList ++ acc)) [] genresList
+    let recommendation = allGenresShow 
+    let sortedRecommendation = sortBy (flip $ comparing length) . group . sort $ recommendation
+    return $ fst $ L.splitAt 3 $ L.map head sortedRecommendation
 
 setup :: Window -> UI ()
 setup window = do
@@ -102,32 +117,13 @@ setup window = do
     
     -- button for sending user's preferences
     recommendationButton <- UI.button # set UI.text "Get Recommendation" # set UI.style [("display", "none")]
-    -- TODO: need to be able to handle an arbitrary amount
     -- create event handlers for each top anime calling function `initPosterAnchorHandlers`
-    animePoster1 <- initPosterAnchorHandlers "Violet Evergarden Movie" "https://cdn.myanimelist.net/images/anime/1032/100778.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster2 <- initPosterAnchorHandlers "Cowboy Bepop" "https://cdn.myanimelist.net/images/anime/7/3791.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster3 <- initPosterAnchorHandlers "Fullmetal Alchemist: Brotherhood" "https://cdn.myanimelist.net/images/anime/2/17090.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster4 <- initPosterAnchorHandlers "Fruits Basket: The Final" "https://cdn.myanimelist.net/images/anime/1085/114792.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster5 <- initPosterAnchorHandlers "Code Geass: Hangyaku no Lelouch R2" "https://cdn.myanimelist.net/images/anime/1736/109854.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster6 <- initPosterAnchorHandlers "Hunter x Hunter (2011)" "https://cdn.myanimelist.net/images/anime/1639/92662.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster7 <- initPosterAnchorHandlers "Steins;Gate" "https://cdn.myanimelist.net/images/anime/10/32023.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster8 <- initPosterAnchorHandlers "Bleach: Sennen Kessen-hen" "https://cdn.myanimelist.net/images/anime/1731/124971.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster9 <- initPosterAnchorHandlers "Bocchi the Rock!" "https://cdn.myanimelist.net/images/anime/1705/120728.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster10 <- initPosterAnchorHandlers "Owarimonogatari 2nd Season" "https://cdn.myanimelist.net/images/anime/2/89401.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster11 <- initPosterAnchorHandlers "Koe no Katachi" "https://cdn.myanimelist.net/images/anime/3/80136.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster12 <- initPosterAnchorHandlers "Gintama" "https://cdn.myanimelist.net/images/anime/13/83412.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster13 <- initPosterAnchorHandlers "Monster" "https://cdn.myanimelist.net/images/anime/10/13733.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster14 <- initPosterAnchorHandlers "Ginga Eiyuu Densetsu" "https://cdn.myanimelist.net/images/anime/2/74210.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    animePoster15 <- initPosterAnchorHandlers "3-gatsu no Lion 2nd Season" "https://cdn.myanimelist.net/images/anime/1429/100628.jpg" favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
-    -- add anime posters to div and to body
-    element animePostersDiv #+ [
-            element favouriteAnimeQuestion,
-            element animePoster1, element animePoster2, element animePoster3,
-            element animePoster4, element animePoster5, element animePoster6,
-            element animePoster7, element animePoster8, element animePoster9,
-            element animePoster10, element animePoster11, element animePoster12,
-            element animePoster13, element animePoster14, element animePoster15
-        ]
+    titles <- liftIO $ getTitles
+    posters <- foldM(\acc (title,url) -> do
+        poster <- initPosterAnchorHandlers title url favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton
+        return (acc ++ [poster])) [] titles
+
+    element animePostersDiv #+ ([element favouriteAnimeQuestion] ++ L.map element posters)
     getBody window #+ [element favouriteAnimeLabelTitle, element animePostersDiv, element favouriteAnimeLabelTitle, element favouriteAnimeTitleCurrent]
 
     recommendedTitleDiv <- UI.div # set UI.style [
@@ -148,9 +144,9 @@ setup window = do
         liftIO $ print genresClickedArrIO -- *** print top 5 genres to console ***
         liftIO $ print favouriteAnimePickedIO -- *** print fav anime to console ***
         -- TODO: call our filter algorithm based on `topFiveGenreNamesRef` and `favouriteAnimeTitleRef`
+        result <- liftIO $ getRecommendation genresClickedArrIO favouriteAnimePickedIO
         element recommendedTitleDiv # set UI.style [("display", "")]
         element recommendedTitle # set UI.text "<PUT GENERATED TITLE(S) HERE>"
-        
     -- setup elements to display recommended anime tile
     getRecommendationDiv <- UI.div # set UI.style [("padding", "10px")]
     element getRecommendationDiv #+ [element recommendationButton]
