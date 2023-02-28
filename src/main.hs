@@ -62,12 +62,14 @@ setup window = do
     favouriteAnimeTitleRef <- liftIO $ newIORef ""
     
     return window # set UI.title "Anime Recommender"
-    -- style <body></body>
+    -- style body
     getBody window # set UI.style [
         ("text-align", "center"),
         ("margin-left", "100px"),
         ("margin-right", "100px"),
-        ("font-family","Helvetica Neue")]
+        ("font-family","Helvetica Neue"),
+        ("background-color", "#7393B3"),
+        ("color", "white")]
     applicationHeading <- UI.h1 # set text "Anime Recommmender Application"
     
     -- div to display the concatenated button names
