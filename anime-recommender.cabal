@@ -6,8 +6,7 @@ executable anime-recommender
     main-is:          
         main.hs
     other-modules:
-        InitializeDatabase
-        CLI
+        Database
     build-depends:    
         base ^>=4.16.4.0,
         aeson,

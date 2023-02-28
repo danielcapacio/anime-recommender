@@ -1,6 +1,5 @@
 module Main where
-import           InitializeDatabase
-import           CLI
+import           Database
 import           Control.Concurrent.Async
 import           Control.Monad.IO.Class (liftIO)
 import           Data.Map as Map
@@ -29,20 +28,13 @@ import           Graphics.UI.Threepenny.Core
       Window )
 
 main = do
-    --result <- getRecommendation ["Adventure", "Action"] "Fullmetal Alchemist: Brotherhood"
-    --liftIO $ print result
-
-    --a <- async $ loadData -- we don't need to run this every time if we already have the database
-    --wait a
+    a <- async $ loadData -- we don't need to run this every time if we already have the database
+    wait a
     -- start a server on port 8023 using the `startGUI` function
     startGUI defaultConfig
         { jsPort       = Just 8023
         , jsStatic     = Just "../wwwroot"
         } setup
-
-    
-    -- result <- getGenre "Fullmetal Alchemist: Brotherhood"
-    -- liftIO $ print result
 
 joinWithComma :: [String] -> String
 joinWithComma = L.foldr (\ s acc -> s ++ ", " ++ acc) ""
@@ -59,7 +51,7 @@ getRecommendation genresList favouriteShow = do
     commonDemographics <- getDemographics favouriteShow
 
     let recommendation = allGenresShow ++ commonThemes ++ commonGenres ++ commonStudios ++ commonDemographics
-    let sortedRecommendation = sortBy (flip $ comparing length) . group . sort $ recommendation
+    let sortedRecommendation = sortBy (flip $ comparing length) . group . sort $ recommendation -- returns 3 most common occurences in list
     return $ fst $ L.splitAt 3 $ L.map head sortedRecommendation
 
 setup :: Window -> UI ()
@@ -90,7 +82,7 @@ setup window = do
     getBody window #+ [element askTopGenresQuestion]
     
     -- buttons for each genre
-    genres <- liftIO $ getAllG
+    genres <- liftIO $ getAllGenres
     genreButtons <- foldM(\acc genre -> do
         genreButton <- UI.button # set UI.text genre # set UI.style [("margin", "5px")]
         return (acc ++ [(genreButton, genre)])) [] genres
@@ -193,3 +185,4 @@ initPosterAnchorHandlers title image favouriteAnimeTitleRef favouriteAnimeLabelT
         -- update fav anime title string
         liftIO $ writeIORef favouriteAnimeTitleRef title
     return posterLink
+

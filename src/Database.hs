@@ -1,36 +1,30 @@
-{-# LANGUAGE EmptyDataDecls             #-}
-{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE OverloadedStrings          #-} -- required for API call
+{-# LANGUAGE QuasiQuotes                #-} -- required for database
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE DerivingStrategies         #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE DerivingStrategies         #-} 
+{-# LANGUAGE StandaloneDeriving         #-} 
+{-# LANGUAGE UndecidableInstances       #-} 
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE DeriveDataTypeable         #-}
-{-# LANGUAGE DeriveGeneric              #-}
 
-module InitializeDatabase where
+module Database where
 
 import           Network.HTTP.Simple
 import           Data.Aeson
-import           Control.Applicative
 import           Database.Persist
 import           Database.Persist.Sqlite
 import           Database.Persist.TH
 import           Control.Monad.IO.Class  (liftIO)
 import           Control.Monad (mzero, forM_, forM, foldM, filterM)
-import           GHC.Generics
 import           Data.List (nub)
 import           System.Directory (removeFile)
 
 {-
- - Defining the parsing behaviour
+ - Defining the types in which we store the parsed JSON
  -}
 data StudiosParsed = StudiosParsed 
     { nameStudio:: String
@@ -61,6 +55,9 @@ data Dataset = Dataset
     { dataObj :: [Info]
     } deriving (Show)
 
+{-
+ - Defining the parsing behaviour
+ -}
 instance FromJSON Dataset where
     parseJSON (Object o) = 
         Dataset <$> o .: "data"
@@ -101,6 +98,7 @@ instance FromJSON DemographicsParsed where
  - Title contains:
  - TitleId
  - Name
+ - Url
  -
  - Studios/Genres/Themes/Demographics contains:
  - StudiosId/GenresId/ThemesId/DemographicsId
@@ -131,6 +129,9 @@ Demographics
     deriving Show
 |]
 
+{-
+ - Fetches response from API, parses it, and returns it
+ -}
 fetchPage :: String -> IO(Either String Dataset)
 fetchPage page = do
     let requestUrl = "https://api.jikan.moe/v4/top/anime" ++ "?page=" ++ page :: String
@@ -141,7 +142,7 @@ fetchPage page = do
     return decoded
 
 {-
- - Fetches response from API, parses it, and places the results in the database
+ - Places the response from the API to the database
  -}
 loadData :: IO ()
 loadData = do
@@ -151,7 +152,7 @@ loadData = do
     page4 <- fetchPage "4"
     let pages = [page1, page2, page3, page4] :: [Either String Dataset]
 
-    removeFile "database.sqlite3"
+    removeFile "database.sqlite3" -- remove the previous database before creating a new one
     runSqlite "database.sqlite3" $ do
         runMigration migrateAll
 
@@ -171,44 +172,66 @@ loadData = do
                        forM_ (demographics i) $ \d -> do
                            insert $ Demographics (nameDemographic d) tempId
       
-
+{-
+ - Input: A string of a show defined in the database
+ - Returns: A list of strings containing all shows that have a common genre with the given string
+ -}
 getGenres :: String -> IO [String]
-getGenres inputAnime = getSomething GenresTitle GenresName genresName genresTitle inputAnime
+getGenres inputAnime = getField GenresTitle GenresName genresName genresTitle inputAnime
 
+{-
+ - Input: A string of a show defined in the database
+ - Returns: A list of strings containing all shows that have a common theme with the given string
+ -}
 getThemes :: String -> IO [String]
-getThemes inputAnime = getSomething ThemesTitle ThemesName themesName themesTitle inputAnime
+getThemes inputAnime = getField ThemesTitle ThemesName themesName themesTitle inputAnime
 
+{-
+ - input: a string of a show defined in the database
+ - returns: a list of strings containing all shows that have a common demographic with the given string
+ -}
 getDemographics :: String -> IO [String]
-getDemographics inputAnime = getSomething DemographicsTitle DemographicsName demographicsName demographicsTitle inputAnime
+getDemographics inputAnime = getField DemographicsTitle DemographicsName demographicsName demographicsTitle inputAnime
 
+{-
+ - input: a string of a show defined in the database
+ - returns: a list of strings containing all shows that have a common studio with the given string
+ -}
 getStudios :: String -> IO [String]
-getStudios inputAnime = getSomething StudiosTitle StudiosName studiosName studiosTitle inputAnime
+getStudios inputAnime = getField StudiosTitle StudiosName studiosName studiosTitle inputAnime
 
-getSomething titleField nameField nameFun titleFun  inputAnime = do
+{-
+ - Input: An EntityField containing the title and the name, two functions that retrieve the name and the title respectively given a Genres/Themes/Studios/Demographics Entity, and a string of a show defined in the database.
+ - Returns: A function that searches the database for every show that has a common Genres/Themes/Studio/Demographics (depending on the input) with the given string
+ -}
+getField titleField nameField nameFun titleFun inputAnime = do
     runSqlite "database.sqlite3" $ do
         -- Grab the Key of the Input Anime
         inputAnimeKey <- selectKeysList [TitleName ==. inputAnime] [LimitTo 1]
 
-        -- Grab all the genres of the inputAnime and store it in "genreList"
-        genreList <- selectList [titleField ==. head inputAnimeKey] [] 
+        -- Grab all the fields of the inputAnime and store it in "fieldList"
+        fieldList <- selectList [titleField ==. head inputAnimeKey] [] 
 
-        -- fold through "genreList" and create "result" that stores list of anime titles that share a genre
+        -- fold through "fieldList" and create "result" that stores list of anime titles that share a field
 
-        result <- foldM (\ acc genre -> do -- search through database and collect all animes with the genre
-            matchingGenreAnimes <- selectList [nameField ==. nameFun (entityVal genre)] []
+        result <- foldM (\ acc field -> do -- search through database and collect all animes with the field
+            matchingGenreAnimes <- selectList [nameField ==. nameFun (entityVal field)] []
             let middleList = [] :: [String]
-            -- loop through all the shows in the [genreName] genre, add their names to the middleResult list
+            -- loop through all the shows in the [fieldName] field, add their names to the middleResult list
             middleResult <- foldM (\ac show -> do
                 let showEntity = entityVal show
                 title <- selectList [TitleId ==. titleFun showEntity] [LimitTo 1]
                 let titleEntity = entityVal (head title)
                 return (ac ++ [titleName titleEntity])) middleList matchingGenreAnimes
             -- add the middleResult to the total accumulator list
-            return (acc ++ middleResult)) [] genreList
+            return (acc ++ middleResult)) [] fieldList
 
-        -- !!! might be able to remove this function
         filterM (\x -> return $ x /= inputAnime) result
 
+{-
+ - Input: A string of a genre stored in the database
+ - Returns: A list of strings containing all shows that match the given genre
+ -}
 getGenreShows :: String -> IO [String]
 getGenreShows genre = do
     runSqlite "database.sqlite3" $ do
@@ -220,6 +243,9 @@ getGenreShows genre = do
             return (acc ++ [titleName titleEntity])) [] genreList
         return result
 
+{-
+ - Returns a list of pairs of strings, where each pair contains (title, url). The title is the name of show and the url is the link to the image related to the show
+ -}
 getTitles :: IO [(String, String)]
 getTitles = do
     runSqlite "database.sqlite3" $ do
@@ -229,6 +255,9 @@ getTitles = do
             return (acc ++ [(titleName title, titleUrl title)])) [] titleList
         return result
         
+{-
+ - Returns a list of all genres in the database (for use in the UI)
+ -}
 getAllGenres :: IO [String]
 getAllGenres = do
     runSqlite "database.sqlite3" $ do
