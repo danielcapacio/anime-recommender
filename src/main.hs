@@ -28,8 +28,8 @@ import           Graphics.UI.Threepenny.Core
       Window )
 
 main = do
-    a <- async $ loadData -- we don't need to run this every time if we already have the database
-    wait a
+    -- a <- async $ loadData -- we don't need to run this every time if we already have the database
+    -- wait a
     -- start a server on port 8023 using the `startGUI` function
     startGUI defaultConfig
         { jsPort       = Just 8023
