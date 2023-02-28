@@ -54,15 +54,19 @@ getRecommendation genresList favouriteShow = do
     let sortedRecommendation = sortBy (flip $ comparing length) . group . sort $ recommendation -- returns 3 most common occurences in list
     return $ fst $ L.splitAt 3 $ L.map head sortedRecommendation
 
+{-
+ - Setup function that executes whenever a browser connects to the server.
+ - Builds the initial HTML page with buttons and posters for the user to interact.
+ -}
 setup :: Window -> UI ()
 setup window = do
     -- create an array ref to hold the user's TOP 5 anime genres
     topFiveGenreNamesRef <- liftIO $ newIORef []
-    -- create an empty string to hold user's single, selected anime TITLE
+    -- create an empty string to hold the user's selected favourite anime TITLE
     favouriteAnimeTitleRef <- liftIO $ newIORef ""
     
     return window # set UI.title "Anime Recommender"
-    -- style body
+    -- apply style to app body
     getBody window # set UI.style [
         ("text-align", "center"),
         ("margin-left", "100px"),
@@ -72,18 +76,16 @@ setup window = do
         ("color", "white")]
     applicationHeading <- UI.h1 # set text "Anime Recommmender Application"
     
-    -- div to display the concatenated button names
     askTopGenresQuestion <- UI.h3 # set text "Please select your top 5 genres (in order from highest preference to lowest):"
     topFiveGenresOutput <- UI.div # set text "" # set UI.style [("margin", "10px")]
     labelTitle <- UI.div # set text "Your genre preferences:" # set UI.style [("margin", "10px"), ("display", "none")]
-    -- div to display to user
+    -- create div to display user's selected genres
     genreDiv <- UI.div # set text "" # set UI.style [("margin", "10px")]
 
-    -- add headers to app body
-    getBody window #+ [element applicationHeading]
-    getBody window #+ [element askTopGenresQuestion]
+    -- add genre headers to app body
+    getBody window #+ [element applicationHeading, element askTopGenresQuestion]
     
-    -- buttons for each genre
+    -- create buttons for each genre
     genres <- liftIO $ getAllGenres
     genreButtons <- foldM(\acc genre -> do
         genreButton <- UI.button # set UI.text genre # set UI.style [("margin", "5px")]
@@ -91,16 +93,17 @@ setup window = do
     genreButtonsDiv <- UI.div # set UI.style [("margin-left", "15%"), ("margin-right", "15%")]
     element genreButtonsDiv #+ L.map (\x -> element $ fst x) genreButtons
 
-    getBody window #+ [element genreButtonsDiv]
-    getBody window #+ [element labelTitle, element genreDiv]
+    -- add genre buttons and div to display their selections onto the app body
+    getBody window #+ [element genreButtonsDiv, element labelTitle, element genreDiv]
 
     favouriteAnimeQuestion <- UI.h3 # set text "Now please select your favourite anime:"
     favouriteAnimeLabelTitle <- UI.div # set text "Your favourite (preferred) anime:" # set UI.style [("margin", "10px"), ("display", "none")]
     favouriteAnimeTitleCurrent <- UI.div # set text "" # set UI.style [("margin", "10px")]
     favouriteAnimeTitleOutput <- UI.div # set text "" # set UI.style [("margin", "10px")]
+    -- hide list of anime posters until user picks their 5 genres
     animePostersDiv <- UI.div # set UI.style [("display", "none")]
     
-    -- button for sending user's preferences
+    -- create button for sending user's preferences
     recommendationButton <- UI.button # set UI.text "Get Recommendation" # set UI.style [("display", "none")]
     -- create event handlers for each top anime calling function `initPosterAnchorHandlers`
     titles <- liftIO $ getTitles
@@ -111,9 +114,10 @@ setup window = do
     element animePostersDiv #+ ([element favouriteAnimeQuestion] ++ L.map element posters)
     getBody window #+ [element favouriteAnimeLabelTitle, element animePostersDiv, element favouriteAnimeLabelTitle, element favouriteAnimeTitleCurrent]
 
+    -- styling the div to display our recommended titles
     recommendedTitleDiv <- UI.div # set UI.style [
             ("margin-bottom", "25px"), ("margin-left", "20%"), ("margin-right", "20%"),
-            ("border", "2px solid black"),
+            ("border", "2px solid white"),
             ("display", "none")]
     recommendedTitleHeader <- UI.h3 # set text "Your recommended title(s):"
     recommendedTitle <- UI.h2 # set text ""
@@ -128,10 +132,11 @@ setup window = do
         element favouriteAnimeTitleOutput # set UI.text favouriteAnimePickedIO
         liftIO $ print genresClickedArrIO -- *** print top 5 genres to console ***
         liftIO $ print favouriteAnimePickedIO -- *** print fav anime to console ***
-        -- TODO: call our filter algorithm based on `topFiveGenreNamesRef` and `favouriteAnimeTitleRef`
         recommendation <- liftIO $ getRecommendation genresClickedArrIO favouriteAnimePickedIO
+        liftIO $ print recommendation -- *** print recommendations to console ***
         element recommendedTitleDiv # set UI.style [("display", "")]
         element recommendedTitle # set UI.text (joinWithComma recommendation)
+    
     -- setup elements to display recommended anime tile
     getRecommendationDiv <- UI.div # set UI.style [("padding", "10px")]
     element getRecommendationDiv #+ [element recommendationButton]
@@ -144,7 +149,16 @@ setup window = do
     initGenreButtonHandlers genreButtons topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv
 
 {-
- - function to set up a click event handler for a genre button 
+ - Function to set up a click event handler for a genre button.
+ - PARAMS:
+ -      genreButtons            : button elements to be disabled upon click and added to user's preferences
+ -      topFiveGenreNamesRef    : top 5 anime genres to update onClick of button
+ -      labelTitle              : div with question prompt to ask user for top 5
+ -      genreDiv                : div to update and display user's top 5 genres
+ -      genreButtonsDiv         : div containing genre buttons to be displayed or hidden, controlled by a max of 5 genre selections
+ -      animePostersDiv         : div containing all anime posters to be displayed when user has selected 5 genres
+ - RETURNS:
+ -      this function simply sets the event handlers for each button and updates appropriate divs to be hidden or displayed
  -}
 initGenreButtonHandlers :: [(UI.Element, String)] -> IORef [String] -> UI.Element -> UI.Element -> UI.Element -> UI.Element -> UI ()
 initGenreButtonHandlers genreButtons topFiveGenreNamesRef labelTitle genreDiv genreButtonsDiv animePostersDiv = do
@@ -171,7 +185,16 @@ initGenreButtonHandlers genreButtons topFiveGenreNamesRef labelTitle genreDiv ge
             element genreDiv # set text genreDivText
 
 {-
- - function to set up a click event handler for an anime poster
+ - Function to set up a click event handler for an anime poster.
+ - PARAMS:
+ -      title                       : title of the anime
+ -      image                       : image url
+ -      favouriteAnimeTitleRef      : fave anime title string to update onClick of poster
+ -      favouriteAnimeLabelTitle    : div displaying the clicked poster on recommendation click
+ -      favouriteAnimeTitleCurrent  : div displaying the *currently* clicked poster (user might not have clicked `Get Recommendation` yet)
+ -      recommendationButton        : the recommendation button to display once a user has successfully picked a fave anime
+ - RETURNS:
+ -      UI Element of an anchor tag containing an image tag with `src` attribute containing the url of the anime poster
  -}
 initPosterAnchorHandlers :: String -> String -> IORef String -> UI.Element -> UI.Element -> UI.Element -> UI UI.Element
 initPosterAnchorHandlers title image favouriteAnimeTitleRef favouriteAnimeLabelTitle favouriteAnimeTitleCurrent recommendationButton = do
@@ -187,4 +210,3 @@ initPosterAnchorHandlers title image favouriteAnimeTitleRef favouriteAnimeLabelT
         -- update fav anime title string
         liftIO $ writeIORef favouriteAnimeTitleRef title
     return posterLink
-
