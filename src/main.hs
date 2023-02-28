@@ -52,7 +52,13 @@ getRecommendation genresList favouriteShow = do
     allGenresShow <- foldM (\acc x -> do
         showList <- getGenreShows x 
         return (showList ++ acc)) [] genresList
-    let recommendation = allGenresShow 
+
+    commonThemes <- getThemes favouriteShow
+    commonGenres <- getGenres favouriteShow
+    commonStudios <- getStudios favouriteShow
+    commonDemographics <- getDemographics favouriteShow
+
+    let recommendation = allGenresShow ++ commonThemes ++ commonGenres ++ commonStudios ++ commonDemographics
     let sortedRecommendation = sortBy (flip $ comparing length) . group . sort $ recommendation
     return $ fst $ L.splitAt 3 $ L.map head sortedRecommendation
 
@@ -84,7 +90,7 @@ setup window = do
     getBody window #+ [element askTopGenresQuestion]
     
     -- buttons for each genre
-    genres <- liftIO $ getGenres
+    genres <- liftIO $ getAllG
     genreButtons <- foldM(\acc genre -> do
         genreButton <- UI.button # set UI.text genre # set UI.style [("margin", "5px")]
         return (acc ++ [(genreButton, genre)])) [] genres

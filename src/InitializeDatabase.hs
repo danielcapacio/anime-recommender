@@ -171,34 +171,43 @@ loadData = do
                        forM_ (demographics i) $ \d -> do
                            insert $ Demographics (nameDemographic d) tempId
       
-{- 
- - Input: A string containing the title of a show
- - Returns: All the titles of shows in the database that share the same genre as the input 
- - If the title appears multiple times, it means the show shares multiple genres with the input
- -}
-getGenre :: String -> IO [String]
-getGenre inputTitle = do
+
+getGenres :: String -> IO [String]
+getGenres inputAnime = getSomething GenresTitle GenresName genresName genresTitle inputAnime
+
+getThemes :: String -> IO [String]
+getThemes inputAnime = getSomething ThemesTitle ThemesName themesName themesTitle inputAnime
+
+getDemographics :: String -> IO [String]
+getDemographics inputAnime = getSomething DemographicsTitle DemographicsName demographicsName demographicsTitle inputAnime
+
+getStudios :: String -> IO [String]
+getStudios inputAnime = getSomething StudiosTitle StudiosName studiosName studiosTitle inputAnime
+
+getSomething titleField nameField nameFun titleFun  inputAnime = do
     runSqlite "database.sqlite3" $ do
-        -- get all shows with the same genre as the FMA
-        title1 <- selectKeysList [TitleName ==. inputTitle] [LimitTo 1]
-        genreList <- selectList [GenresTitle ==. (head title1)] [] -- list of genres of given show
-        let sameGenreAccumulator = [] :: [String]
-        
-        -- loop through all the genres in given show
-        result <- foldM (\acc genre -> do
-            let genreEntity = entityVal genre
-            showList <- selectList [GenresName ==. genresName genreEntity] [] -- list of shows with same genre as genreName
+        -- Grab the Key of the Input Anime
+        inputAnimeKey <- selectKeysList [TitleName ==. inputAnime] [LimitTo 1]
+
+        -- Grab all the genres of the inputAnime and store it in "genreList"
+        genreList <- selectList [titleField ==. head inputAnimeKey] [] 
+
+        -- fold through "genreList" and create "result" that stores list of anime titles that share a genre
+
+        result <- foldM (\ acc genre -> do -- search through database and collect all animes with the genre
+            matchingGenreAnimes <- selectList [nameField ==. nameFun (entityVal genre)] []
             let middleList = [] :: [String]
             -- loop through all the shows in the [genreName] genre, add their names to the middleResult list
             middleResult <- foldM (\ac show -> do
                 let showEntity = entityVal show
-                title <- selectList [TitleId ==. genresTitle showEntity] [LimitTo 1]
+                title <- selectList [TitleId ==. titleFun showEntity] [LimitTo 1]
                 let titleEntity = entityVal (head title)
-                return (ac ++ [titleName titleEntity])) middleList showList
+                return (ac ++ [titleName titleEntity])) middleList matchingGenreAnimes
             -- add the middleResult to the total accumulator list
-            return (acc ++ middleResult)) sameGenreAccumulator genreList
-        result <- filterM (\x -> return $ x /= inputTitle) result
-        return result
+            return (acc ++ middleResult)) [] genreList
+
+        -- !!! might be able to remove this function
+        filterM (\x -> return $ x /= inputAnime) result
 
 getGenreShows :: String -> IO [String]
 getGenreShows genre = do
@@ -220,8 +229,8 @@ getTitles = do
             return (acc ++ [(titleName title, titleUrl title)])) [] titleList
         return result
         
-getGenres :: IO [String]
-getGenres = do
+getAllGenres :: IO [String]
+getAllGenres = do
     runSqlite "database.sqlite3" $ do
         genresList <- selectList [] []
         result <- foldM (\acc genresEntity -> do
